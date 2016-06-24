@@ -1,0 +1,142 @@
+<?php
+/**
+ * Implementation of webform_submission_update for Amnesty International Vlaanderen Petition
+ * - if webform submission has the field civi_xcm_class, the contact data needs to be
+ *   passed to CiviCRM with the specific Api PetitionContact Create
+ *
+ * @param $node
+ * @param $submission
+ * @author Erik Hommel (CiviCooP)
+ * @date 23 Jun 2016
+ * @license AGPL-3.0
+ */
+
+function aivl_webform_civicrm_webform_submission_update($node, $submission) {
+  if (_aivl_webform_civicrm_relevant_webform($submission->data, $node->webform['components'])) {
+    $function_name = _aivl_webform_civicrm_compose_function_name($node->webform['components']);
+    if (function_exists($function_name)) {
+      call_user_func_array($function_name, array($node, $submission));
+    }
+  }
+}
+/**
+ * Implementation of webform_submission_insert for Amnesty International Vlaanderen Petition
+ * - if webform submission has the field civi_xcm_class, the contact data needs to be
+ *   passed to CiviCRM with the specific Api PetitionContact Create
+ *
+ * @param $node
+ * @param $submission
+ * @author Erik Hommel (CiviCooP)
+ * @date 23 Jun 2016
+ * @license AGPL-3.0
+ */
+
+function aivl_webform_civicrm_webform_submission_insert($node, $submission) {
+  if (_aivl_webform_civicrm_relevant_webform($submission->data, $node->webform['components'])) {
+    $function_name = _aivl_webform_civicrm_compose_function_name($node->webform['components']);
+    if (function_exists($function_name)) {
+      call_user_func_array($function_name, array($node, $submission));
+    }
+  }
+}
+
+/**
+ * Function to retrieve the name of the function to call from the webform component
+ * @param $webform_components
+ * @return array
+ */
+function _aivl_webform_civicrm_compose_function_name($webform_components) {
+  foreach ($webform_components as $componentId => $componentData) {
+    if ($componentData['form_key'] == "civi_xcm_class") {
+      return "_aivl_webform_civicrm_".$componentData['value'];
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Function to process form into CiviCRM using the api
+ * @param $node
+ * @param $submission
+ * @throws CiviCRM_API3_Exception
+ */
+function _aivl_webform_civicrm_petition($node, $submission) {
+  $params = array(
+    'nid' => 0,
+    'uid' => 0,
+    'webform_title' => "",
+    'sid' => 0,
+    'serial' => 0,
+    'submit_date' => "",
+    'data' => array()
+  );
+  _aivl_webform_civicrm_set_node_params($node, $params);
+  _aivl_webform_civicrm_set_submission_params($submission, $params);
+  // put all components in
+  foreach ($node->webform['components'] as $componentId => $componentData) {
+    $component = array(
+      'field_key' => $componentData['form_key'],
+      'field_type' => $componentData['type'],
+    );
+    if (isset($submission->data[$componentId])) {
+      $component['field_value'] = $submission->data[$componentId];
+    }
+    $params['data'][$componentId] = $component;
+  }
+  civicrm_initialize();
+  civicrm_api3('AivlWebform', 'process', $params);
+}
+
+/**
+ * Function to take some data out of the submission and put it in the params array
+ *
+ * @param $submission
+ * @param $params
+ */
+function _aivl_webform_civicrm_set_submission_params($submission, &$params) {
+  if (isset($submission->sid)) {
+    $params['sid'] = $submission->sid;
+  }
+  if (isset($submission->serial)) {
+    $params['serial'] = $submission->serial;
+  }
+  if (isset($submission->submitted)) {
+    $params['submit_date'] = $submission->submitted;
+  }
+}
+/**
+ * Function to take some data out of the node and put it in the params array
+ *
+ * @param $node
+ * @param $params
+ */
+function _aivl_webform_civicrm_set_node_params($node, &$params) {
+  if ($node->nid) {
+    $params['nid'] = $node->nid;
+  }
+  if ($node->title) {
+    $params['webform_title'] = $node->title;
+  }
+  if ($node->uid) {
+    $params['uid'] = $node->uid;
+  }
+}
+
+/**
+ * Function to determine if the incoming submission should be processed. It should only
+ * be processed if there is a component named 'civi_xcm_class' and the value is not empty
+ *
+ * @param $submission_data
+ * @param $webform_components
+ * @return bool
+ */
+function _aivl_webform_civicrm_relevant_webform($submission_data, $webform_components) {
+  foreach ($webform_components as $componentId => $componentData) {
+    if ($componentData['form_key'] == "civi_xcm_class") {
+      if (!empty($submission_data[$componentId][0])) {
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
+}
