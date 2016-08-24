@@ -1,7 +1,7 @@
 <?php
 /**
  * Implementation of webform_submission_update for Amnesty International Vlaanderen Petition
- * - if webform submission has the field civi_xcm_class, the contact data needs to be
+ * - if webform submission has the field civicrm_processing_class, the contact data needs to be
  *   passed to CiviCRM with the specific Api PetitionContact Create
  *
  * @param $node
@@ -21,7 +21,7 @@ function aivl_webform_civicrm_webform_submission_update($node, $submission) {
 }
 /**
  * Implementation of webform_submission_insert for Amnesty International Vlaanderen Petition
- * - if webform submission has the field civi_xcm_class, the contact data needs to be
+ * - if webform submission has the field civicrm_processing_class, the contact data needs to be
  *   passed to CiviCRM with the specific Api PetitionContact Create
  *
  * @param $node
@@ -47,7 +47,7 @@ function aivl_webform_civicrm_webform_submission_insert($node, $submission) {
  */
 function _aivl_webform_civicrm_compose_function_name($webform_components) {
   foreach ($webform_components as $componentId => $componentData) {
-    if ($componentData['form_key'] == "civi_xcm_class") {
+    if ($componentData['form_key'] == "civicrm_processing_class") {
       return "_aivl_webform_civicrm_".$componentData['value'];
     }
   }
@@ -124,7 +124,7 @@ function _aivl_webform_civicrm_set_node_params($node, &$params) {
 
 /**
  * Function to determine if the incoming submission should be processed. It should only
- * be processed if there is a component named 'civi_xcm_class' and the value is not empty
+ * be processed if there is a component named 'civicrm_processing_class' and the value is not empty
  *
  * @param $submission_data
  * @param $webform_components
@@ -132,7 +132,7 @@ function _aivl_webform_civicrm_set_node_params($node, &$params) {
  */
 function _aivl_webform_civicrm_relevant_webform($submission_data, $webform_components) {
   foreach ($webform_components as $componentId => $componentData) {
-    if ($componentData['form_key'] == "civi_xcm_class") {
+    if ($componentData['form_key'] == "civicrm_processing_class") {
       if (!empty($submission_data[$componentId][0])) {
         return TRUE;
       }
