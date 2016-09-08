@@ -43,7 +43,7 @@ function aivl_webform_civicrm_webform_submission_insert($node, $submission) {
 /**
  * Function to retrieve the name of the function to call from the webform component
  * @param $webform_components
- * @return array
+ * @return string|bool
  */
 function _aivl_webform_civicrm_compose_function_name($webform_components) {
   foreach ($webform_components as $componentId => $componentData) {
