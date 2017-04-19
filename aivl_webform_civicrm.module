@@ -83,8 +83,13 @@ function _aivl_webform_civicrm_petition($node, $submission) {
     }
     $params['data'][$componentId] = $component;
   }
-  civicrm_initialize();
-  civicrm_api3('AivlWebform', 'process', $params);
+
+  // previously: use local civicrm
+  // civicrm_initialize();
+  // civicrm_api3('AivlWebform', 'process', $params);
+
+  // now: use CMRF connection
+  aivl_webform_sendCall('AivlWebform', 'process', $params, array('retry' => 1));
 }
 
 /**
@@ -139,4 +144,27 @@ function _aivl_webform_civicrm_relevant_webform($submission_data, $webform_compo
     }
   }
   return FALSE;
+}
+
+/**
+ * Wrapper for sending an API call to CiviCRM via the CMRF framework
+ */
+function aivl_webform_sendCall($entity, $action, $parameters, $options = array()) {
+  // get config
+  $config = variable_get('aivl_webform_connector');
+  if ($config == NULL) {
+    $config = array();
+    variable_set('aivl_webform_connector', $config);
+  }
+
+  // get core
+  $core = cmrf_core_get_core();
+  if (empty($config['connector_id'])) {
+    $config['connector_id'] = $core->registerConnector('aivl_webform');
+    variable_set('aivl_webform_connector', $config);
+  }
+
+  $call = $core->createCall($config['connector_id'], $entity, $action, $parameters, $options);
+  $core->executeCall($call);
+  return $call;
 }
